@@ -184,7 +184,7 @@ export default function Hero() {
     
     <div className="flex-1 rounded-xl overflow-hidden">
       <video
-        src="/demo.mp4"
+        src="/main.mp4"
         autoPlay
         loop
         muted
