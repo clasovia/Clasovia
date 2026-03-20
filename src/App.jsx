@@ -1,8 +1,24 @@
+import { useState, useEffect } from 'react'
 import PremiumHeader from './components/PremiumHeader.jsx'
 import Hero from './components/Hero.jsx'
 import Footer from './components/Footer.jsx'
+import Loader from './components/Loader.jsx'
 
 export default function App() {
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false)
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (loading) {
+    return <Loader />
+  }
+
   return (
     <div className="scroll-smooth min-h-screen bg-slate-950 text-white">
       <PremiumHeader />
@@ -16,7 +32,7 @@ export default function App() {
             
             {/* LEFT CONTENT */}
             <div className="space-y-5">
-              <h2 className="text-3xl font-bold text-white sm:text-4xl">
+              <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">
                 About the Trainer
               </h2>
 
@@ -82,7 +98,7 @@ export default function App() {
         <section id="learn" className="bg-slate-950 px-4 py-20 md:px-6">
           <div className="mx-auto max-w-6xl">
             
-            <h2 className="text-3xl font-bold text-white sm:text-4xl">
+            <h2 className="mt-5 text-3xl font-bold text-white sm:text-4xl">
               What You&apos;ll Learn
             </h2>
 
@@ -230,11 +246,11 @@ export default function App() {
           <section id="contact" className="bg-slate-950 px-4 py-20 md:px-6">
             <div className="mx-auto max-w-6xl text-center">
 
-              <h2 className="text-3xl font-bold text-white sm:text-4xl">
+              <h2 className="mt-5 text-3xl font-bold text-white sm:text-4xl">
                 Need Assistance?
               </h2>
 
-              <p className="mx-auto mt-3 max-w-xl text-slate-400">
+              <p className="mx-auto mt-4 max-w-xl text-slate-400">
                 Have questions about the webinar, payment, or getting started?  
                 Our team is here to assist you instantly.
               </p>

@@ -31,13 +31,13 @@ export default function PremiumHeader() {
         {/* Desktop Nav */}
         <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
           <a href="#about" className="text-white transition hover:text-emerald-400">
-            About
+            About the Trainer
           </a>
           <a href="#learn" className="text-white transition hover:text-emerald-400">
             What You'll Learn
           </a>
           <a href="#contact" className="text-white transition hover:text-emerald-400">
-            Contact
+            Contact Us
           </a>
           <a
             href="#pricing"
