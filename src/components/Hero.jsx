@@ -1,34 +1,30 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 export default function Hero() {
   const [timeLeft, setTimeLeft] = useState({});
-  const [seatsLeft, setSeatsLeft] = useState(49);
-  const [usersJoined, setUsersJoined] = useState(20);
 
-  // ✅ Stable target date
-  const targetDateRef = useRef(null);
+  const TOTAL_SEATS = 151;
 
-  useEffect(() => {
+  // ✅ Initial values
+  const [usersJoined, setUsersJoined] = useState(97);
+  const [seatsLeft, setSeatsLeft] = useState(TOTAL_SEATS - 97);
+
+  // ✅ FIXED: Instant target date (2 days)
+  const [targetDate] = useState(() => {
     const date = new Date();
-    date.setDate(date.getDate() + 7);
-    targetDateRef.current = date;
-  }, []);
+    date.setDate(date.getDate() + 2);
+    return date;
+  });
 
-  const targetDate = targetDateRef.current;
+  const nextDateString = targetDate.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 
-  const nextDateString = targetDate
-    ? targetDate.toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : "";
-
-  // ⏳ Countdown
+  // ⏳ Countdown (same as before)
   useEffect(() => {
-    if (!targetDate) return;
-
-    const interval = setInterval(() => {
+    const updateTime = () => {
       const now = new Date();
       const diff = targetDate - now;
 
@@ -40,7 +36,48 @@ export default function Hero() {
         minutes: Math.floor((diff / 1000 / 60) % 60),
         seconds: Math.floor((diff / 1000) % 60),
       });
-    }, 1000);
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+
+    return () => clearInterval(interval);
+  }, [targetDate]);
+
+  // 🔥 ✅ SYNCED LOGIC (MAIN FIX)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setUsersJoined((prev) => {
+        if (prev >= TOTAL_SEATS) return prev;
+
+        const newUsers = prev + 1; // +1 each time
+
+        setSeatsLeft(TOTAL_SEATS - newUsers); // auto decrease
+
+        return newUsers;
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+  // ⏳ Countdown (instant start)
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const diff = targetDate - now;
+
+      if (diff <= 0) return;
+
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / 1000 / 60) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+      });
+    };
+
+    updateTime(); // 🔥 instant run
+    const interval = setInterval(updateTime, 1000);
 
     return () => clearInterval(interval);
   }, [targetDate]);
@@ -67,24 +104,24 @@ export default function Hero() {
     timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes <= 59;
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white">
-      
-      {/* Background */}
-      <div className="absolute inset-0 opacity-40">
-        <div className="absolute -left-10 top-10 h-64 w-64 rounded-full bg-emerald-400/40 blur-3xl" />
-        <div className="absolute right-4 top-28 h-72 w-72 rounded-full bg-cyan-400/25 blur-3xl" />
+    <section className="relative overflow-hidden bg-slate-950 text-white">
+
+      {/* 🔥 Background Glow */}
+      <div className="absolute inset-0 opacity-50">
+        <div className="absolute left-[-100px] top-[50px] h-[300px] w-[300px] bg-emerald-500/30 blur-[120px]" />
+        <div className="absolute right-[-80px] bottom-[50px] h-[300px] w-[300px] bg-cyan-500/20 blur-[120px]" />
       </div>
 
       <div className="relative mx-auto flex max-w-6xl flex-col gap-12 px-4 py-28 md:flex-row md:items-center md:justify-between md:px-6">
-        
+
         {/* LEFT */}
         <div className="max-w-2xl space-y-7">
 
-          {/* 🔥 INFO PILLS */}
+          {/* Pills */}
           <div className="flex flex-wrap items-center gap-3 text-sm font-medium">
 
             <div className="rounded-full bg-emerald-500/10 px-4 py-1 text-emerald-300 border border-emerald-400/20">
-              🔥Live Webinar: {nextDateString}
+              🔥 Live Webinar: {nextDateString}
             </div>
 
             <div className="rounded-full bg-red-500/10 px-4 py-1 text-red-400 border border-red-400/20">
@@ -97,7 +134,7 @@ export default function Hero() {
 
           </div>
 
-          {/* ⏳ Countdown */}
+          {/* Countdown */}
           <div className="flex items-center gap-3">
             {["days", "hours", "minutes", "seconds"].map((unit) => (
               <div
@@ -123,81 +160,115 @@ export default function Hero() {
           </div>
 
           {/* Heading */}
-        <h1
-          className="text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.05] tracking-tight text-white"
-          style={{ fontFamily: "Inter, sans-serif" }}
-        >
-          Create & Sell
-          <span className="block mt-4">360° Virtual Tours</span>
+       <h1
+        className="max-w-xl text-3xl sm:text-4xl md:text-5xl font-semibold leading-[1.15] tracking-tight"
+        style={{ fontFamily: "Poppins, sans-serif" }}
+      >
 
-          <span className="block mt-4 text-emerald-400">
-            Like a Pro
+        {/* Line 1 */}
+        <span className="block text-white">
+          Build a Profitable Income
+        </span>
+
+        {/* Line 2 */}
+        <span className="block mt-4 text-slate-300">
+          With
+          <span className="ml-4 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent font-medium">
+            360° Virtual Tours
           </span>
-        </h1>
+        </span>
+
+        {/* Line 3 */}
+        <span className="block mt-4 text-white">
+          Even as a
+          <span className="ml-4 text-emerald-400 font-medium">
+            Beginner
+          </span>
+        </span>
+
+      </h1>
 
           {/* Subtext */}
-          <p className="text-lg text-slate-300 sm:text-xl">
-            Learn the complete process to create, price, and sell virtual tours to real clients — even if you're starting from scratch.
+          <p className="text-lg text-slate-300">
+            Learn how to create, price, and sell virtual tours to real clients — even if you're starting from scratch.
           </p>
 
           {/* CTA */}
-       <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="flex flex-col gap-4 sm:flex-row">
 
-  {/* Primary CTA */}
- <a
-  href="#pricing"
-  className="relative inline-flex items-center justify-center overflow-hidden rounded-full border border-emerald-400 px-8 py-3 text-sm font-semibold text-emerald-400 transition-all duration-300 group"
->
-  <span className="absolute inset-0 bg-emerald-500 opacity-0 transition-all duration-300 group-hover:opacity-100"></span>
+            <a
+              href="#pricing"
+              className="inline-flex items-center justify-center rounded-full border border-emerald-400 px-8 py-3 text-sm font-semibold text-emerald-400 transition hover:bg-emerald-500 hover:text-white"
+            >
+              Get Started for ₹99 →
+            </a>
 
-  <span className="relative z-10 transition-colors duration-300 group-hover:text-white">
-    Get Started for ₹99 →
-  </span>
-</a>
+            <a
+              href="#learn"
+              className="inline-flex items-center justify-center rounded-full border border-white/20 px-8 py-3 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/10"
+            >
+              What You'll Learn →
+            </a>
 
-  {/* Secondary CTA */}
-  <a
-  href="#learn"
-  className="group relative inline-flex items-center justify-center overflow-hidden rounded-full border border-white/20 px-8 py-3 text-sm font-medium text-white backdrop-blur-md transition-all duration-300"
->
-  {/* Hover background */}
-  <span className="absolute inset-0 bg-white/10 opacity-0 transition-all duration-300 group-hover:opacity-100"></span>
-
-  {/* Border glow */}
-  <span className="absolute inset-0 rounded-full border border-white/10 group-hover:border-white/30 transition-all duration-300"></span>
-
-  {/* Text */}
-  <span className="relative z-10 flex items-center gap-2">
-    What You'll Learn
-    <span className="transition-transform duration-300 group-hover:translate-x-1">
-      →
-    </span>
-  </span>
-</a>
-
-</div>
+          </div>
         </div>
 
         {/* RIGHT */}
-        <div className="h-72 w-full max-w-md rounded-3xl border border-white/10 bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-700 p-3 shadow-2xl md:h-[400px] md:w-[800px]">
-  <div className="flex h-full flex-col rounded-2xl bg-white/5 p-2">
-    
-    <div className="flex-1 rounded-xl overflow-hidden">
-      <video
-        src="/main.mp4"
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="h-full w-full object-cover"
-      />
-    </div>
+        <div className="relative w-full max-w-md md:max-w-1xl">
 
-    <p className="mt-5 text-xs text-slate-400">
-      Build a ₹1L–₹2L/month income with 360° Virtual Tours
-    </p>
-  </div>
-</div>
+          {/* Glow */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 blur-2xl opacity-60"></div>
+
+          {/* Card */}
+          <div className="relative group rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.6)] overflow-hidden transition duration-500 hover:-translate-y-2">
+
+            {/* Video */}
+            <div className="relative h-64 md:h-[360px] overflow-hidden">
+
+              <video
+                src="/main.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+              />
+
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+
+              {/* Tag */}
+              <div className="absolute bottom-4 left-4 rounded-lg bg-black/60 px-3 py-1 text-xs border border-white/20 backdrop-blur">
+                🎥 Real Client Work
+              </div>
+
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+
+              <h3 className="text-xl font-semibold">
+                Turn Skills into Income
+              </h3>
+
+              <p className="mt-2 text-sm text-slate-400">
+                Learn how to create & sell 360° virtual tours to businesses.
+              </p>
+
+              <div className="mt-4 flex items-center gap-4 text-xs text-slate-400">
+                <span>💰 ₹1L–₹2L/month</span>
+                <span>📍 Real Clients</span>
+                <span>⚡ Beginner Friendly</span>
+              </div>
+
+              <button className="mt-5 w-full rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 py-3 text-sm font-semibold text-white transition hover:from-emerald-600 hover:to-cyan-600">
+                Start Learning →
+              </button>
+
+            </div>
+          </div>
+
+        </div>
 
       </div>
     </section>

@@ -7,8 +7,12 @@ export default {
         secondary: '#F2F2F2',
         accent: '#FE7F0E',
       },
+
+      // ✅ ADD THIS
+      fontFamily: {
+        poppins: ['Poppins', 'sans-serif'],
+      },
     },
   },
   plugins: [],
 }
-

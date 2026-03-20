@@ -12,7 +12,7 @@ export default function App() {
 
         {/* ABOUT SECTION */}
         <section id="about" className="bg-slate-900 px-4 py-20 md:px-6">
-          <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-2 lg:items-center">
+          <div className="mx-auto grid max-w-[1100px] gap-10 lg:grid-cols-2 lg:items-center">
             
             {/* LEFT CONTENT */}
             <div className="space-y-5">
@@ -50,7 +50,7 @@ export default function App() {
             </div>
 
             {/* RIGHT CARD */}
-            <div className="mx-auto max-w-sm rounded-3xl border border-emerald-500/30 bg-slate-900 p-6">
+            <div className="ml-auto max-w-sm rounded-3xl border border-emerald-500/30 bg-slate-900 p-6 justify-end shadow-lg shadow-emerald-500/10  transition hover:shadow-emerald-500/20">
               
               {/* IMAGE ADDED */}
               <img
@@ -63,15 +63,15 @@ export default function App() {
               <div className="mt-4 text-center">
                 <p className="text-white font-semibold">Santosh Prajapati</p>
                 <p className="mt-2 text-sm space-y-1 text-slate-400">
-                  Founder @ ZUSTP | 360° Virtual Tour Expert
+                  Founder @ ZUSTP | 360° Virtual Tour Specialist
                 </p>
               </div>
 
               {/* MINI TRUST */}
               <div className="mt-3 space-y-1 text-xs text-slate-400">
-                <p>✔ Helped 73+ Businesses</p>
-                <p>✔ Real Client-Based Training</p>
-                <p>✔ Beginner Friendly System</p>
+                <p>✔ Delivered Virtual Tour Solutions for 70+ Businesses</p>
+                <p>✔ Hands-on Training with Real Client Projects</p>
+                <p>✔ Step-by-Step System Designed for Beginners</p>
               </div>
             </div>
 
@@ -285,7 +285,7 @@ export default function App() {
 
         {/* Heading */}
         <h2 className="text-3xl font-bold sm:text-4xl">
-          Start Your Journey with Clasovia
+          Start Your Journey with @Zustp
         </h2>
 
         {/* Subtext */}
