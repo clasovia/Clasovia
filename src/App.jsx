@@ -45,8 +45,8 @@ export default function App() {
               </p>
 
               {/* PROOF */}
-              <p className="font-medium text-emerald-400">
-                👉 Helped 73+ businesses improve their visibility using 360° tours
+              <p className="max-w-xl text-lg leading-relaxed font-medium text-emerald-300">
+                Helped 73+ businesses improve their visibility using 360° tours
               </p>
 
               <p className="max-w-xl text-slate-300">
@@ -54,13 +54,13 @@ export default function App() {
               </p>
 
               {/* BULLETS */}
-              <div className="space-y-2 text-slate-200">
+              <div className="max-w-xl text-lg leading-relaxed space-y-2 text-slate-300">
                 <p>✔ Learn this high-demand skill</p>
                 <p>✔ Start earning from it</p>
                 <p>✔ Grow it into a sustainable business</p>
               </div>
 
-              <p className="text-sm text-slate-400">
+              <p className="max-w-xl text-lg leading-relaxed text-sm text-slate-300">
                 Everything I teach is based on real-world experience — not theory.
               </p>
             </div>
