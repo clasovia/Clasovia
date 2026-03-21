@@ -28,7 +28,7 @@ export default function App() {
 
         {/* ABOUT SECTION */}
         <section id="about" className="bg-slate-900 px-4 py-20 md:px-6">
-          <div className="mx-auto grid max-w-[1100px] gap-10 lg:grid-cols-2 lg:items-center">
+          <div className="mx-auto grid max-w-[1100px] gap-5 lg:grid-cols-2 lg:items-center">
             
             {/* LEFT CONTENT */}
             <div className="space-y-5">
