@@ -3,9 +3,16 @@ import PremiumHeader from './components/PremiumHeader.jsx'
 import Hero from './components/Hero.jsx'
 import Footer from './components/Footer.jsx'
 import Loader from './components/Loader.jsx'
+import PaymentModal from './components/PaymentModal.jsx'
+import { createOrder, verifyPayment } from './utils/api.js'
 
 export default function App() {
   const [loading, setLoading] = useState(true)
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '' })
+  const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -15,16 +22,127 @@ export default function App() {
     return () => clearTimeout(timer)
   }, [])
 
+  const handlePayment = async (userData) => {
+    if (paymentLoading) return
+
+    const { name, email, phone } = userData || {}
+
+    // Basic validation
+    if (!name?.trim() || !email?.trim() || !phone?.trim()) {
+      setError('Please provide name, email and phone before payment.')
+      return
+    }
+
+    setPaymentLoading(true)
+    setError(null)
+    setSuccessMessage('')
+
+    try {
+      const orderResponse = await createOrder({ name, email, phone })
+      if (!orderResponse.success) {
+        throw new Error(orderResponse.error || 'Failed to create order')
+      }
+
+      const { order_id, amount, currency } = orderResponse
+
+      if (!window.Razorpay) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+          script.async = true
+          script.onload = resolve
+          script.onerror = () => reject(new Error('Razorpay SDK failed to load'))
+          document.body.appendChild(script)
+        })
+      }
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: amount,
+        currency: currency,
+        order_id: order_id,
+        name: 'Clasovia',
+        description: 'Premium Access',
+        prefill: {
+          name,
+          email,
+          contact: phone,
+        },
+        theme: { color: '#10b981' },
+        handler: async (response) => {
+          try {
+            const verifyResponse = await verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              name,
+              email,
+              phone,
+            })
+
+            if (verifyResponse.success) {
+              setSuccessMessage('Payment successful. Redirecting...')
+              setTimeout(() => {
+                window.location.href = 'https://chat.whatsapp.com/FB7wl6p8K8x6MVGVucIR6J'
+              }, 700)
+            } else {
+              setError('Payment verification failed. Please try again.')
+            }
+          } catch (verifyError) {
+            console.error('Verification error:', verifyError)
+            setError('Payment verification failed. Please contact support.')
+          } finally {
+            setPaymentLoading(false)
+            setIsPaymentModalOpen(false)
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setPaymentLoading(false)
+          },
+        },
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.open()
+    } catch (error) {
+      console.error('Payment error:', error)
+      setError(error.message || 'Failed to initiate payment')
+      setPaymentLoading(false)
+    }
+  }
+
   if (loading) {
     return <Loader />
   }
 
+  const openPaymentModal = () => {
+    setError(null)
+    setSuccessMessage('')
+    setIsPaymentModalOpen(true)
+  }
+
+  const closePaymentModal = () => {
+    setIsPaymentModalOpen(false)
+  }
+
   return (
     <div className="scroll-smooth min-h-screen bg-slate-950 text-white">
-      <PremiumHeader />
+      <PremiumHeader onPayClick={openPaymentModal} disabled={paymentLoading} />
 
       <main className="pt-10">
-        <Hero />
+        <Hero onPayClick={openPaymentModal} disabled={paymentLoading} />
+
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={closePaymentModal}
+          onSubmit={handlePayment}
+          paymentLoading={paymentLoading}
+          error={error}
+          successMessage={successMessage}
+          formData={formData}
+          setFormData={setFormData}
+        />
 
         {/* ABOUT SECTION */}
         <section id="about" className="bg-slate-900 px-4 py-20 md:px-6">
@@ -216,15 +334,25 @@ export default function App() {
               </div>
 
               {/* CTA */}
-              <a
-                href="#contact"
-                className="group mt-10 inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all duration-300 hover:bg-emerald-600 hover:shadow-emerald-500/30 active:scale-95"
+              <button
+                onClick={openPaymentModal}
+                disabled={paymentLoading}
+                className="group mt-10 inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all duration-300 hover:bg-emerald-600 hover:shadow-emerald-500/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Reserve Your Seat
-                <span className="transition-transform duration-300 group-hover:translate-x-1">
-                  →
-                </span>
-              </a>
+                {paymentLoading ? 'Processing...' : 'Reserve Your Seat'}
+                {!paymentLoading && (
+                  <span className="transition-transform duration-300 group-hover:translate-x-1">
+                    →
+                  </span>
+                )}
+              </button>
+
+              {/* Error Message */}
+              {error && (
+                <p className="mt-3 text-center text-sm text-red-400">
+                  {error}
+                </p>
+              )}
 
               {/* URGENCY */}
               <p className="mt-5 text-center text-sm text-amber-400">
@@ -315,15 +443,18 @@ export default function App() {
         </p>
 
         {/* CTA BUTTON */}
-        <a
-          href="#pricing"
-          className="group mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-8 py-3 text-base font-semibold text-emerald-400 transition-all duration-300 hover:bg-slate-800"
+        <button
+          onClick={openPaymentModal}
+          disabled={paymentLoading}
+          className="group mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-8 py-3 text-base font-semibold text-emerald-400 transition-all duration-300 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Reserve Seat Now →
-          <span className="transition-transform duration-300 group-hover:translate-x-1">
-            →
-          </span>
-        </a>
+          {paymentLoading ? 'Processing...' : 'Reserve Seat Now →'}
+          {!paymentLoading && (
+            <span className="transition-transform duration-300 group-hover:translate-x-1">
+              →
+            </span>
+          )}
+        </button>
 
         {/* 🔥 Trust line */}
         <p className="mt-5 text-xs text-white/80">

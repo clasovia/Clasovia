@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function PremiumHeader() {
+export default function PremiumHeader({ onPayClick, disabled }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -39,12 +39,13 @@ export default function PremiumHeader() {
           <a href="#contact" className="text-white transition hover:text-emerald-400">
             Contact Us
           </a>
-          <a
-            href="#pricing"
-            className="rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-white shadow-md transition hover:bg-emerald-600"
+          <button
+            onClick={onPayClick}
+            disabled={disabled}
+            className="rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-white shadow-md transition hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Get Started for ₹99 →
-          </a>
+            {disabled ? 'Processing...' : 'Get Started for ₹99 →'}
+          </button>
         </nav>
 
         {/* Mobile Button */}

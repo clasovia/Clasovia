@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function Hero() {
+export default function Hero({ onPayClick, disabled }) {
   const [timeLeft, setTimeLeft] = useState({});
 
   const TOTAL_SEATS = 151;
@@ -196,12 +196,13 @@ export default function Hero() {
           {/* CTA */}
           <div className="flex flex-col gap-4 sm:flex-row">
 
-            <a
-              href="#pricing"
-              className="inline-flex items-center justify-center rounded-full border border-emerald-400 px-8 py-3 text-sm font-semibold text-emerald-400 transition hover:bg-emerald-500 hover:text-white"
+            <button
+              onClick={onPayClick}
+              disabled={disabled}
+              className="inline-flex items-center justify-center rounded-full border border-emerald-400 px-8 py-3 text-sm font-semibold text-emerald-400 transition hover:bg-emerald-500 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Get Started for ₹99 →
-            </a>
+              {disabled ? 'Processing...' : 'Get Started for ₹99 →'}
+            </button>
 
             <a
               href="#learn"
@@ -261,8 +262,12 @@ export default function Hero() {
                 <span>⚡ Beginner Friendly</span>
               </div>
 
-              <button className="mt-5 w-full rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 py-3 text-sm font-semibold text-white transition hover:from-emerald-600 hover:to-cyan-600">
-                Start Learning →
+              <button
+                onClick={onPayClick}
+                disabled={disabled}
+                className="mt-5 w-full rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 py-3 text-sm font-semibold text-white transition hover:from-emerald-600 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {disabled ? 'Processing...' : 'Start Learning →'}
               </button>
 
             </div>
