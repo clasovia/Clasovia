@@ -4,7 +4,7 @@ import Hero from './components/Hero.jsx'
 import Footer from './components/Footer.jsx'
 import Loader from './components/Loader.jsx'
 import PaymentModal from './components/PaymentModal.jsx'
-import { createOrder, verifyPayment } from './utils/api.js'
+import { createOrder, verifyPayment, getRazorpayKey } from './utils/api.js'
 
 export default function App() {
   const [loading, setLoading] = useState(true)
@@ -38,6 +38,14 @@ export default function App() {
     setSuccessMessage('')
 
     try {
+      // Get Razorpay key from backend
+      const keyResponse = await getRazorpayKey()
+      if (!keyResponse.success) {
+        throw new Error(keyResponse.error || 'Failed to get Razorpay key')
+      }
+      const razorpayKey = keyResponse.key
+      console.log('Razorpay key loaded:', razorpayKey ? 'Present' : 'Missing')
+
       const orderResponse = await createOrder({ name, email, phone })
       if (!orderResponse.success) {
         throw new Error(orderResponse.error || 'Failed to create order')
@@ -57,7 +65,7 @@ export default function App() {
       }
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: razorpayKey,
         amount: amount,
         currency: currency,
         order_id: order_id,

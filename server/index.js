@@ -12,7 +12,7 @@ app.use(express.json());
 
 // MongoDB Atlas connection
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((error) => {
     console.error("MongoDB connection error:", error);
@@ -22,6 +22,14 @@ mongoose
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// Get Razorpay key securely
+app.get("/api/get-key", (req, res) => {
+  if (!process.env.RAZORPAY_KEY_ID) {
+    return res.status(500).json({ success: false, error: "Razorpay key not configured" });
+  }
+  res.json({ success: true, key: process.env.RAZORPAY_KEY_ID });
 });
 
 // very light rate limit to prevent abuse
@@ -130,8 +138,9 @@ app.post("/verify-payment", async (req, res) => {
       name,
       email,
       phone,
-      payment_id: razorpay_payment_id,
-      order_id: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      orderId: razorpay_order_id,
+      signature: razorpay_signature,
       status: isValid ? "success" : "failed",
     });
 
