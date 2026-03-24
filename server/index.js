@@ -12,14 +12,11 @@ app.use(express.json());
 
 // MongoDB Atlas connection
 mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((error) => {
     console.error("MongoDB connection error:", error);
-    process.exit(1);
+    // process.exit(1); // Comment out to allow server to run without DB
   });
 
 const razorpay = new Razorpay({
@@ -138,7 +135,13 @@ app.post("/verify-payment", async (req, res) => {
       status: isValid ? "success" : "failed",
     });
 
-    await paymentRecord.save();
+    try {
+      await paymentRecord.save();
+      console.log("Payment record saved");
+    } catch (saveError) {
+      console.error("Failed to save payment record:", saveError);
+      // Continue even if save fails
+    }
 
     if (!isValid) {
       console.log("Payment verification failed for order", razorpay_order_id);
