@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose'
 
 const paymentUserSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
@@ -10,6 +10,9 @@ const paymentUserSchema = new mongoose.Schema({
   status: { type: String, enum: ['success', 'failed'], required: true },
 }, {
   timestamps: true,
-});
+})
 
-module.exports = mongoose.model('PaymentUser', paymentUserSchema);
+const PaymentUser = mongoose.models.PaymentUser
+  || mongoose.model('PaymentUser', paymentUserSchema)
+
+export default PaymentUser
