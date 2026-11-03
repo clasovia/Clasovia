@@ -1,10 +1,51 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { FiArrowRight, FiArrowUpRight, FiCamera, FiCheck, FiCompass, FiMapPin, FiMove, FiTarget, FiTrendingUp } from 'react-icons/fi'
 import PremiumHeader from './components/PremiumHeader.jsx'
 import Hero from './components/Hero.jsx'
 import Footer from './components/Footer.jsx'
 import Loader from './components/Loader.jsx'
 import PaymentModal from './components/PaymentModal.jsx'
 import { createOrder, verifyPayment, getRazorpayKey } from './utils/api.js'
+
+const outcomes = [
+  {
+    number: '01',
+    icon: FiCamera,
+    title: 'Create immersive tours',
+    description: 'Plan a shoot, capture a space, and turn it into a polished 360° experience.',
+  },
+  {
+    number: '02',
+    icon: FiCompass,
+    title: 'Make places discoverable',
+    description: 'Understand how virtual tours and maps help people explore local businesses.',
+  },
+  {
+    number: '03',
+    icon: FiTarget,
+    title: 'Find your first clients',
+    description: 'Build a simple offer and learn how to start conversations with local businesses.',
+  },
+  {
+    number: '04',
+    icon: FiTrendingUp,
+    title: 'Turn skill into a service',
+    description: 'Shape your packages, explain your value, and build a practical path to grow.',
+  },
+]
+
+const modules = [
+  ['01', 'The opportunity', 'Where 360° experiences fit into the modern local-business landscape.'],
+  ['02', 'Capture & create', 'Camera setup, shooting flow, and the details that make a tour feel seamless.'],
+  ['03', 'Publish & present', 'Connect the tour to a map listing and share it with confidence.'],
+  ['04', 'Pitch & price', 'Package your service, approach businesses, and build your next steps.'],
+]
+
+const questions = [
+  ['Do I need a 360° camera to get started?', 'A dedicated 360° camera is useful, but you do not need to own one before learning the workflow. The session covers the setup and practical options.'],
+  ['Is this suitable for beginners?', 'Yes. The workshop starts with the fundamentals and walks through the process in a clear, practical order.'],
+  ['What happens after I book?', 'You will receive the next steps for joining the live session after your payment is confirmed.'],
+]
 
 export default function App() {
   const [loading, setLoading] = useState(true)
@@ -15,19 +56,22 @@ export default function App() {
   const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 1000)
-
+    const timer = setTimeout(() => setLoading(false), 500)
     return () => clearTimeout(timer)
   }, [])
+
+  const openPaymentModal = () => {
+    setError(null)
+    setSuccessMessage('')
+    setIsPaymentModalOpen(true)
+  }
+
+  const closePaymentModal = () => setIsPaymentModalOpen(false)
 
   const handlePayment = async (userData) => {
     if (paymentLoading) return
 
     const { name, email, phone } = userData || {}
-
-    // Basic validation
     if (!name?.trim() || !email?.trim() || !phone?.trim()) {
       setError('Please provide name, email and phone before payment.')
       return
@@ -38,13 +82,10 @@ export default function App() {
     setSuccessMessage('')
 
     try {
-      // Get Razorpay key from backend
       const keyResponse = await getRazorpayKey()
       if (!keyResponse.success) {
         throw new Error(keyResponse.error || 'Failed to get Razorpay key')
       }
-      const razorpayKey = keyResponse.key
-      console.log('Razorpay key loaded:', razorpayKey ? 'Present' : 'Missing')
 
       const orderResponse = await createOrder({ name, email, phone })
       if (!orderResponse.success) {
@@ -52,7 +93,6 @@ export default function App() {
       }
 
       const { order_id, amount, currency } = orderResponse
-
       if (!window.Razorpay) {
         await new Promise((resolve, reject) => {
           const script = document.createElement('script')
@@ -65,18 +105,14 @@ export default function App() {
       }
 
       const options = {
-        key: razorpayKey,
-        amount: amount,
-        currency: currency,
-        order_id: order_id,
+        key: keyResponse.key,
+        amount,
+        currency,
+        order_id,
         name: 'Clasovia',
-        description: 'Premium Access',
-        prefill: {
-          name,
-          email,
-          contact: phone,
-        },
-        theme: { color: '#10b981' },
+        description: '360° Virtual Tour Business Workshop',
+        prefill: { name, email, contact: phone },
+        theme: { color: '#c4f06a' },
         handler: async (response) => {
           try {
             const verifyResponse = await verifyPayment({
@@ -105,376 +141,185 @@ export default function App() {
           }
         },
         modal: {
-          ondismiss: () => {
-            setPaymentLoading(false)
-          },
+          ondismiss: () => setPaymentLoading(false),
         },
       }
 
-      const rzp = new window.Razorpay(options)
-      rzp.open()
-    } catch (error) {
-      console.error('Payment error:', error)
-      setError(error.message || 'Failed to initiate payment')
+      const razorpay = new window.Razorpay(options)
+      razorpay.open()
+    } catch (paymentError) {
+      console.error('Payment error:', paymentError)
+      setError(paymentError.message || 'Failed to initiate payment')
       setPaymentLoading(false)
     }
   }
 
-  if (loading) {
-    return <Loader />
-  }
-
-  const openPaymentModal = () => {
-    setError(null)
-    setSuccessMessage('')
-    setIsPaymentModalOpen(true)
-  }
-
-  const closePaymentModal = () => {
-    setIsPaymentModalOpen(false)
-  }
+  if (loading) return <Loader />
 
   return (
-    <div className="scroll-smooth min-h-screen bg-slate-950 text-white">
+    <div className="site-shell">
       <PremiumHeader onPayClick={openPaymentModal} disabled={paymentLoading} />
 
-      <main className="pt-10">
+      <main>
         <Hero onPayClick={openPaymentModal} disabled={paymentLoading} />
 
-        <PaymentModal
-          isOpen={isPaymentModalOpen}
-          onClose={closePaymentModal}
-          onSubmit={handlePayment}
-          paymentLoading={paymentLoading}
-          error={error}
-          successMessage={successMessage}
-          formData={formData}
-          setFormData={setFormData}
-        />
+        <section className="proof-strip" aria-label="Workshop highlights">
+          <div className="proof-item"><span className="proof-mark"><FiMove /></span><span>Immersive 360° experiences</span></div>
+          <span className="proof-divider" />
+          <div className="proof-item"><span className="proof-mark"><FiMapPin /></span><span>Maps & local discovery</span></div>
+          <span className="proof-divider" />
+          <div className="proof-item"><span className="proof-mark"><FiTrendingUp /></span><span>A skill you can take to market</span></div>
+        </section>
 
-        {/* ABOUT SECTION */}
-        <section id="about" className="bg-slate-900 px-4 py-20 md:px-6">
-          <div className="mx-auto grid max-w-[1100px] gap-10 lg:grid-cols-2 lg:items-center">
-            
-            {/* LEFT CONTENT */}
-            <div className="space-y-5">
-              <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">
-                About the Trainer
-              </h2>
-
-              <p className="max-w-xl text-lg leading-relaxed text-slate-300">
-                Hi, I’m Santosh Prajapati — Founder of ZUSTP and a 360° Virtual Tour Expert.
-              </p>
-
-              <p className="max-w-xl text-slate-300">
-                I started with zero clients and no big network. By leveraging 360° virtual tours, I helped local businesses stand out online, attract more customers, and generate real results.
-              </p>
-
-              {/* PROOF */}
-              <p className="max-w-xl text-lg leading-relaxed font-medium text-emerald-300">
-                Helped 73+ businesses improve their visibility using 360° tours
-              </p>
-
-              <p className="max-w-xl text-slate-300">
-                Today, I help others do the same.
-              </p>
-
-              {/* BULLETS */}
-              <div className="max-w-xl text-lg leading-relaxed space-y-2 text-slate-300">
-                <p>✔ Learn this high-demand skill</p>
-                <p>✔ Start earning from it</p>
-                <p>✔ Grow it into a sustainable business</p>
-              </div>
-
-              <p className="max-w-xl text-lg leading-relaxed text-sm text-slate-300">
-                Everything I teach is based on real-world experience — not theory.
-              </p>
-            </div>
-
-            {/* RIGHT CARD */}
-            <div className="ml-auto max-w-sm rounded-3xl border border-emerald-500/30 bg-slate-900 p-6 justify-end shadow-lg shadow-emerald-500/10  transition hover:shadow-emerald-500/20">
-              
-              {/* IMAGE ADDED */}
-              <img
-                src="/founder.jpg"
-                alt="Santosh Prajapati"
-                className="h-72 w-full object-cover rounded-2xl"
-              />
-
-              {/* NAME */}
-              <div className="mt-4 text-center">
-                <p className="text-white font-semibold">Santosh Prajapati</p>
-                <p className="mt-2 text-sm space-y-1 text-slate-400">
-                  Founder @ ZUSTP | 360° Virtual Tour Specialist
-                </p>
-              </div>
-
-              {/* MINI TRUST */}
-              <div className="mt-3 space-y-1 text-xs text-slate-400">
-                <p>✔ Delivered Virtual Tour Solutions for 70+ Businesses</p>
-                <p>✔ Hands-on Training with Real Client Projects</p>
-                <p>✔ Step-by-Step System Designed for Beginners</p>
-              </div>
-            </div>
-
+        <section className="section outcomes-section" id="learn">
+          <div className="section-heading">
+            <p className="eyebrow"><span /> THE PLAYBOOK</p>
+            <h2>See the whole picture.<br /><span>Build what comes next.</span></h2>
+            <p className="section-intro">A practical introduction to creating virtual tours—and turning that skill into a service local businesses can use.</p>
+          </div>
+          <div className="outcome-grid">
+            {outcomes.map((outcome) => {
+              const Icon = outcome.icon
+              return (
+                <article className="outcome-card" key={outcome.number}>
+                  <div className="card-topline"><span>{outcome.number} / 04</span><Icon aria-hidden="true" /></div>
+                  <h3>{outcome.title}</h3>
+                  <p>{outcome.description}</p>
+                  <span className="card-arrow"><FiArrowUpRight /></span>
+                </article>
+              )
+            })}
           </div>
         </section>
 
-        {/* LEARN SECTION */}
-        <section id="learn" className="bg-slate-950 px-4 py-20 md:px-6">
-          <div className="mx-auto max-w-6xl">
-            
-            <h2 className="mt-5 text-3xl font-bold text-white sm:text-4xl">
-              What You&apos;ll Learn
-            </h2>
-
-            <div className="mt-8 grid gap-5 sm:grid-cols-2">
-              {[
-                { title: '360° Virtual Tours Explained (Beginner to Pro)', icon: '🧭' },
-                { title: 'How to Find & Approach High-Paying Clients ?', icon: '🤝' },
-                { title: 'Complete Shooting Setup (Camera + Angles)', icon: '📷' },
-                { title: 'Editing & Publishing Workflow (Step-by-Step)', icon: '✂️' },
-                { title: 'Pricing Strategy (₹5K–₹25K per Project)', icon: '💰' },
-                { title: 'How to Get Your First Client Fast ?', icon: '🚀' },
-              ].map((item) => (
-                <div
-                  key={item.title}
-                  className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-lg shadow-black/20"
-                >
-                  <p className="text-2xl">{item.icon}</p>
-                  <h3 className="mt-3 text-lg font-semibold text-white">
-                    {item.title}
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-400">
-                    Practical step-by-step guidance during the live session.
-                  </p>
-                </div>
-              ))}
+        <section className="workflow-section" aria-labelledby="workflow-title">
+          <div className="workflow-inner">
+            <div className="workflow-copy">
+              <p className="eyebrow"><span /> FROM CAMERA TO CLIENT</p>
+              <h2 id="workflow-title">A real-world skill.<br /><span>A clearer way forward.</span></h2>
+              <p>Learn a simple end-to-end workflow—from capturing a space to showing a business owner what a virtual tour can do for them.</p>
+              <a className="text-link" href="#curriculum">Explore the workshop <FiArrowRight /></a>
             </div>
-
-            <p className="mt-10 text-center text-sm text-emerald-400">
-              By the end of this webinar, you&apos;ll have a clear roadmap to start your own 360° virtual tour business.
-            </p>
-
-          </div>
-        </section>
-
-        {/* PRICING */}
-        <section id="pricing" className="bg-slate-900 px-4 py-20 md:px-6">
-          <div className="mx-auto max-w-3xl">
-            <div className="relative overflow-hidden rounded-3xl border border-emerald-500/50 bg-slate-950 p-8 shadow-2xl shadow-emerald-500/10 transition duration-300 hover:scale-[1.01]">
-
-              {/* TOP BADGE */}
-              <div className="absolute -top-0 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-4 py-1 text-xs font-semibold text-white shadow">
-                Limited Time Offer
-              </div>
-
-              {/* HEADLINE */}
-              <h2 className="mt-4 text-center text-3xl font-bold text-white md:text-4xl">
-                Live Webinar Access
-              </h2>
-
-              {/* SUBTEXT */}
-              <p className="mt-3 text-center text-slate-400 max-w-xl mx-auto">
-                Learn what actually works — practical strategies you can implement immediately to get real results.
-              </p>
-
-              {/* PRICE */}
-              <div className="mt-6 text-center">
-                <p className="text-sm text-slate-500 line-through">Worth ₹999</p>
-                <div className="text-5xl font-extrabold text-emerald-400">₹99</div>
-                <p className="text-xs text-slate-400 mt-1">
-                  One-time payment • Instant access
-                </p>
-              </div>
-
-              {/* FEATURES (PREMIUM GRID) */}
-              <div className="mt-10 grid gap-4 sm:grid-cols-2">
-                
-                <div className="flex items-start gap-4 rounded-xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-sm transition hover:border-emerald-500/40">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 text-lg">
-                    ✔
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">2-hour intensive session</p>
-                    <p className="text-sm text-slate-400">
-                      Focused on clarity and real outcomes
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4 rounded-xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-sm transition hover:border-emerald-500/40">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 text-lg">
-                    ✔
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">Execution framework</p>
-                    <p className="text-sm text-slate-400">
-                      Step-by-step system you can apply instantly
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4 rounded-xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-sm transition hover:border-emerald-500/40">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 text-lg">
-                    ✔
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">Live Q&A session</p>
-                    <p className="text-sm text-slate-400">
-                      Get real answers to your real questions
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4 rounded-xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-sm transition hover:border-emerald-500/40">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 text-lg">
-                    ✔
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">Actionable roadmap</p>
-                    <p className="text-sm text-slate-400">
-                      Clear plan to start with confidence
-                    </p>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* CTA */}
-              <button
-                onClick={openPaymentModal}
-                disabled={paymentLoading}
-                className="group mt-10 inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all duration-300 hover:bg-emerald-600 hover:shadow-emerald-500/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {paymentLoading ? 'Processing...' : 'Reserve Your Seat'}
-                {!paymentLoading && (
-                  <span className="transition-transform duration-300 group-hover:translate-x-1">
-                    →
-                  </span>
-                )}
-              </button>
-
-              {/* Error Message */}
-              {error && (
-                <p className="mt-3 text-center text-sm text-red-400">
-                  {error}
-                </p>
-              )}
-
-              {/* URGENCY */}
-              <p className="mt-5 text-center text-sm text-amber-400">
-                Limited seats available — filling fast
-              </p>
-
-              {/* TRUST BADGES */}
-              <div className="mt-3 flex items-center justify-center gap-4 text-xs text-slate-500">
-                <span>🔒 Secure Checkout</span>
-                <span>⚡ Instant Confirmation</span>
-                <span>✔ No Hidden Charges</span>
-              </div>
-
+            <div className="workflow-map" aria-label="Illustration of the virtual-tour workflow">
+              <div className="map-grid" />
+              <svg className="route-lines" viewBox="0 0 640 400" fill="none" aria-hidden="true">
+                <path d="M66 324 158 271 226 287 302 190 388 204 474 112 590 75" />
+                <path d="M86 90 166 130 226 104 302 190 346 285 451 300 550 232" />
+                <path className="route-dash" d="M158 271 226 287 302 190 388 204 474 112" />
+              </svg>
+              <div className="map-coordinate">28° 36&apos; 50.1&quot; N<br />77° 12&apos; 32.8&quot; E</div>
+              <div className="map-label map-label-top"><span className="live-dot" /> LIVE TOUR WORKFLOW</div>
+              <div className="map-pin map-pin-one"><FiCamera /><span>CAPTURE</span></div>
+              <div className="map-pin map-pin-two"><FiMapPin /><span>GET DISCOVERED</span></div>
+              <div className="map-pin map-pin-three"><FiTarget /><span>WIN A CLIENT</span></div>
+              <div className="map-legend"><span>01</span> Create <i /> <span>02</span> Publish <i /> <span>03</span> Grow</div>
             </div>
           </div>
         </section>
 
-        {/* CONTACT */}
-          <section id="contact" className="bg-slate-950 px-4 py-20 md:px-6">
-            <div className="mx-auto max-w-6xl text-center">
-
-              <h2 className="mt-5 text-3xl font-bold text-white sm:text-4xl">
-                Need Assistance?
-              </h2>
-
-              <p className="mx-auto mt-4 max-w-xl text-slate-400">
-                Have questions about the webinar, payment, or getting started?  
-                Our team is here to assist you instantly.
-              </p>
-
-              {/* CTA BUTTONS */}
-              <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-
-                {/* WhatsApp */}
-                <a
-                  href="https://api.whatsapp.com/send?phone=917488735601&text=Hi%2C%20I%20want%20to%20join%20your%20%E2%82%B999%20webinar.%20Please%20share%20details."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-emerald-600"
-                >
-                  Chat on WhatsApp
-                </a>
-
-                {/* Gmail Compose */}
-                <a
-                  href="https://mail.google.com/mail/?view=cm&fs=1&to=info.zustp@gmail.com&su=Webinar%20Inquiry&body=Hi%2C%20I%20want%20to%20join%20your%20%E2%82%B999%20webinar.%20Please%20share%20details."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/10"
-                >
-                  Email Support
-                </a>
-
-              </div>
-
-              {/* TRUST LINE */}
-              <p className="mt-6 text-xs text-slate-500">
-                  We’re available to help before and after the webinar.
-              </p>
-
+        <section className="section curriculum-section" id="curriculum">
+          <div className="curriculum-heading">
+            <div className="section-heading">
+              <p className="eyebrow"><span /> INSIDE THE SESSION</p>
+              <h2>Less theory.<br /><span>More field notes.</span></h2>
             </div>
-          </section>
+            <p className="section-intro">A focused, live two-hour session that takes you from the first camera setup to your first client conversation.</p>
+          </div>
+          <div className="module-list">
+            {modules.map(([number, title, description]) => (
+              <article className="module-row" key={number}>
+                <span className="module-number">{number}</span>
+                <h3>{title}</h3>
+                <p>{description}</p>
+                <FiArrowUpRight className="module-icon" aria-hidden="true" />
+              </article>
+            ))}
+          </div>
+        </section>
 
-        {/* CTA */}
-        <section className="relative bg-gradient-to-r from-emerald-600 via-cyan-500 to-blue-500 px-4 py-20 text-center text-white md:px-6 overflow-hidden">
-      
-      {/* Glow effect (subtle) */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute -top-10 left-10 h-40 w-40 rounded-full bg-white blur-3xl" />
-        <div className="absolute bottom-0 right-10 h-40 w-40 rounded-full bg-white blur-3xl" />
-      </div>
+        <section className="instructor-section" id="about">
+          <div className="instructor-image-wrap">
+            <img src="/founder.jpg" alt="Santosh Prajapati, 360° virtual tour specialist" />
+            <div className="image-caption"><span className="live-dot" /> OUT IN THE FIELD</div>
+          </div>
+          <div className="instructor-copy">
+            <p className="eyebrow"><span /> LEARN FROM THE FIELD</p>
+            <h2>Built on real work.<br /><span>Taught by doing.</span></h2>
+            <p className="instructor-lede">“I started with no big network. I learned how to help local businesses get seen—and built a service around it.”</p>
+            <p>Santosh Prajapati is the founder of ZUSTP and a 360° virtual tour specialist. His hands-on experience helping 73+ businesses shape the workshop, with practical steps you can start applying right away.</p>
+            <div className="instructor-signoff">
+              <div className="instructor-avatar">SP</div>
+              <div><strong>Santosh Prajapati</strong><span>Founder, ZUSTP · 360° Virtual Tour Specialist</span></div>
+            </div>
+            <div className="instructor-stat"><strong>73<span>+</span></strong><span>businesses helped with immersive tours</span></div>
+          </div>
+        </section>
 
-      <div className="relative z-10 mx-auto max-w-2xl">
+        <section className="enroll-section" id="pricing">
+          <div className="enroll-copy">
+            <p className="eyebrow"><span /> YOUR NEXT MOVE</p>
+            <h2>Learn the skill.<br /><span>Map the opportunity.</span></h2>
+            <p>Join a live, beginner-friendly workshop and leave with a practical roadmap for building your own 360° virtual tour service.</p>
+            <ul className="enroll-benefits">
+              <li><FiCheck /> 2-hour live, step-by-step session</li>
+              <li><FiCheck /> Camera, editing & publishing workflow</li>
+              <li><FiCheck /> Client outreach and pricing fundamentals</li>
+              <li><FiCheck /> Time for your questions, live</li>
+            </ul>
+          </div>
+          <div className="price-card">
+            <div className="price-card-top"><span className="price-pill"><span className="live-dot" /> LIVE WORKSHOP</span><span className="price-duration">2 HOURS · BEGINNER FRIENDLY</span></div>
+            <p className="price-label">One-time seat</p>
+            <div className="price-amount"><span>₹</span>99</div>
+            <p className="price-note">A small first step toward a new skill.</p>
+            <button className="button button-primary price-cta" onClick={openPaymentModal} disabled={paymentLoading}>
+              {paymentLoading ? 'Processing...' : 'Reserve your seat'} <FiArrowUpRight />
+            </button>
+            <p className="price-secure"><span>✳</span> Secure checkout powered by Razorpay</p>
+            <div className="price-card-footer"><span>Instant confirmation</span><span>Questions? <a href="mailto:info.zustp@gmail.com">Talk to us</a></span></div>
+            {error && <p className="payment-inline-error" role="alert">{error}</p>}
+          </div>
+        </section>
 
-        {/* Heading */}
-        <h2 className="text-3xl font-bold sm:text-4xl">
-          Start Your Journey with @Zustp
-        </h2>
+        <section className="faq-section">
+          <div className="faq-heading">
+            <p className="eyebrow"><span /> GOOD TO KNOW</p>
+            <h2>Before you <span>jump in.</span></h2>
+            <a className="text-link" href="#contact">Still curious? Get in touch <FiArrowRight /></a>
+          </div>
+          <div className="faq-list">
+            {questions.map(([question, answer]) => (
+              <details className="faq-item" key={question}>
+                <summary>{question}<span>+</span></summary>
+                <p>{answer}</p>
+              </details>
+            ))}
+          </div>
+        </section>
 
-        {/* Subtext */}
-        <p className="mt-3 text-lg text-white/90">
-          Learn a high-income skill and start earning with just ₹99
-        </p>
-
-        {/* 🔥 Urgency line */}
-        <p className="mt-2 text-sm text-white/80">
-          Limited seats available — secure your spot now
-        </p>
-
-        {/* CTA BUTTON */}
-        <button
-          onClick={openPaymentModal}
-          disabled={paymentLoading}
-          className="group mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-8 py-3 text-base font-semibold text-emerald-400 transition-all duration-300 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {paymentLoading ? 'Processing...' : 'Reserve Seat Now →'}
-          {!paymentLoading && (
-            <span className="transition-transform duration-300 group-hover:translate-x-1">
-              →
-            </span>
-          )}
-        </button>
-
-        {/* 🔥 Trust line */}
-        <p className="mt-5 text-xs text-white/80">
-          500+ students already joined • Beginner friendly • Limited time offer
-        </p>
-
-      </div>
-    </section>
-
+        <section className="final-cta" id="contact">
+          <div className="final-cta-orbit" aria-hidden="true" />
+          <p className="eyebrow"><span /> THE NEXT MOVE IS YOURS</p>
+          <h2>Make the real world<br />your <span>classroom.</span></h2>
+          <p>Start with a camera. Leave with a whole new perspective.</p>
+          <button className="button button-primary" onClick={openPaymentModal} disabled={paymentLoading}>
+            {paymentLoading ? 'Processing...' : 'Join the live workshop'} <FiArrowUpRight />
+          </button>
+          <a className="final-contact-link" href="mailto:info.zustp@gmail.com">Questions first? info.zustp@gmail.com</a>
+        </section>
       </main>
 
       <Footer />
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={closePaymentModal}
+        onSubmit={handlePayment}
+        paymentLoading={paymentLoading}
+        error={error}
+        successMessage={successMessage}
+        formData={formData}
+        setFormData={setFormData}
+      />
     </div>
   )
 }
